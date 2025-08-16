@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import streamlit as st
 import detect_squares as DS  # this is the file you uploaded
+import base64
 
 # Optional: quiet TF logs before importing TF
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
@@ -375,6 +376,15 @@ def run_pipeline_on_bgr_array(model, img_bgr, filename,
         "img_preview": cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB),
     }
 
+def download_file_button(file_path, label="⬇️ Download trained model"):
+    p = pathlib.Path(file_path)
+    if not p.exists():
+        st.warning("No trained model yet.")
+        return
+    b64 = base64.b64encode(p.read_bytes()).decode()
+    href = f'<a href="data:file/h5;base64,{b64}" download="{p.name}">{label}</a>'
+    st.markdown(href, unsafe_allow_html=True)
+
 # =========================
 # Streamlit UI
 # =========================
@@ -396,6 +406,8 @@ with st.sidebar:
     low_margin      = st.slider("CNN 'decisive' margin", 0.00, 0.40, 0.15, 0.01)
     st.caption("OCR only overrides a CNN digit when it beats it by the margin and has sufficient absolute confidence. "
                "If CNN margin is small, the higher confidence wins.")
+    
+    download_file_button(MODEL_USER_PATH)
 
     if st.button("🧠 Fine-tune from feedback"):
         with st.spinner("Fine-tuning…"):
